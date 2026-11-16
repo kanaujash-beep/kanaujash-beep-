@@ -59,7 +59,7 @@
         </p>
         <div>
           <label for="admin-passcode-input" class="block font-mono text-[10px] uppercase tracking-widest text-ice/80 mb-1.5">OWNER PASSCODE</label>
-          <input type="password" 24122004"admin-passcode-input" required placeholder="Enter passcode (default: id=)" class="w-full bg-subtle border border-hairline focus:border-strong rounded-xl px-3.5 py-2.5 font-mono text-sm text-main placeholder:text-dim outline-none">
+          <input type="password" 24122004"admin-passcode-input" required placeholder="Enter passcode (default: 2026)" class="w-full bg-subtle border border-hairline focus:border-strong rounded-xl px-3.5 py-2.5 font-mono text-sm text-main placeholder:text-dim outline-none">
         </div>
         <div id="admin-error-msg" class="hidden font-mono text-[11px] text-rose-300">Incorrect passcode. Try again.</div>
         <button type="submit" class="btn-invert w-full py-2.5 rounded-full font-mono text-xs uppercase tracking-wider font-medium cursor-pointer">
@@ -114,7 +114,13 @@
     let db = null;
     let auth = null;
     let currentUser = null;
-    let cloudAdminPasscode = localStorage.getItem('stillink_admin_pass') || '24122004';
+    const DEFAULT_PASS_HASH = '046a89b30e9b5835a5058f04b98cd6a76fc36bf469b4815b3cbb9933647e506c';
+let adminPassHash = localStorage.getItem('stillink_admin_hash') || DEFAULT_PASS_HASH;
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
     let entriesUnsubscribe = null;
     let settingsUnsubscribe = null;
 
@@ -123,7 +129,7 @@
         localStorage.setItem('stillink_entries', JSON.stringify(state.entries));
         localStorage.setItem('stillink_title', state.title);
         localStorage.setItem('stillink_bio', state.bio);
-        localStorage.setItem('stillink_admin_pass', cloudAdminPasscode);
+        localStorage.setItem('stillink_admin_hash', adminPassHash);
       } catch (e) {}
     }
 
@@ -140,7 +146,8 @@
         }
       } catch (e) {}
     }
-      if (type === 'ink') {
+        function THE_NAME_YOU_FOUND(type) {
+      if (type === 'ink') {:
         return `<svg viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg" class="w-full h-full object-cover">
           <rect width="800" height="560" fill="#050d1d"/>
           <g stroke="#7dd3fc" fill="none" stroke-linecap="round">
@@ -215,7 +222,7 @@
           const data = snap.data();
           if (data.title) state.title = data.title;
           if (data.bio) state.bio = data.bio;
-          if (data.adminPasscode) cloudAdminPasscode = data.adminPasscode;
+          if (data.adminHash) adminPassHash = data.adminHash;
           syncHeaderAndBioUI();
         } else {
           // Seed initial profile settings in cloud
@@ -316,24 +323,25 @@
       m.classList.remove('flex');
     }
 
-    function submitAdminUnlock(e) {
-      e.preventDefault();
-      const input = document.getElementById('admin-passcode-input').value.trim();
-      if (input === cloudAdminPasscode) {
-        state.isAdmin = true;
-        applyAdminUI();
-        closeAdminModal();
-        showToast('Owner mode unlocked');
-      } else {
-        document.getElementById('admin-error-msg').classList.remove('hidden');
-      }
-    }
+    async function submitAdminUnlock(e) {
+  e.preventDefault();
+  const input = document.getElementById('admin-passcode-input').value.trim();
+  if ((await sha256(input)) === adminPassHash) {
+    state.isAdmin = true;
+    applyAdminUI();
+    closeAdminModal();
+    showToast('Owner mode unlocked');
+  } else {
+    document.getElementById('admin-error-msg').classList.remove('hidden');
+  }
+}
 
     async function updateAdminPasscode(e) {
       e.preventDefault();
       const nextPass = document.getElementById('new-admin-passcode').value.trim();
       if (nextPass.length < 4) return;
-      cloudAdminPasscode = nextPass;
+     adminPassHash = await sha256(nextPass);
+saveLocalFallback();
       if (db && currentUser) {
         const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'profile');
         await setDoc(settingsRef, {
@@ -394,7 +402,7 @@
         await setDoc(settingsRef, {
           title: state.title,
           bio: state.bio,
-          adminPasscode: cloudAdminPasscode
+              { merge: true }
         }).catch(() => {});
       }
       showToast(`Title synced to cloud: "${val}"`);
@@ -410,7 +418,7 @@
           await setDoc(settingsRef, {
             title: state.title,
             bio: state.bio,
-            adminPasscode: cloudAdminPasscode
+                { merge: true }
           }).catch(() => {});
         }
         showToast('Bio synced to cloud');
