@@ -1,0 +1,617 @@
+<!-- ... existing code ... -->
+      <!-- Right Action Controls -->
+      <div class="flex items-center gap-2">
+        <button onclick="toggleTheme()" class="px-3 py-1.5 rounded-full bg-subtle border border-hairline hover:border-strong font-mono text-[10px] sm:text-[11px] tracking-wider uppercase text-sub hover:text-main flex items-center gap-1.5 cursor-pointer">
+          <span id="theme-icon" class="text-ice">✦</span>
+          <span id="theme-label" class="hidden sm:inline">ARCTIC MIST</span>
+        </button>
+
+        <button onclick="openAdminModal()" id="admin-lock-btn" class="px-3 py-1.5 rounded-full bg-subtle border border-hairline hover:border-strong font-mono text-[10px] sm:text-[11px] tracking-wider uppercase text-sub hover:text-main flex items-center gap-1.5 cursor-pointer" title="Owner Admin Access">
+          <span id="admin-lock-icon">🔒</span>
+          <span id="admin-lock-label" class="hidden sm:inline">ADMIN</span>
+        </button>
+
+        <button onclick="openComposer()" id="nav-new-entry-btn" class="hidden btn-invert px-3.5 py-1.5 rounded-full font-mono text-[10px] sm:text-[11px] tracking-wider uppercase font-medium items-center gap-1.5 cursor-pointer">
+          <span>+</span>
+          <span>NEW ENTRY</span>
+        </button>
+      </div>
+    </div>
+  </header>
+<!-- ... existing code ... -->
+        <div class="flex flex-wrap items-center justify-center gap-3 mb-10">
+          <button onclick="handleFooterCompose()" class="btn-invert px-5 py-2.5 rounded-full font-mono text-[11px] uppercase tracking-wider cursor-pointer">
+            + POST NEW ENTRY
+          </button>
+          <button onclick="downloadBackup()" class="px-5 py-2.5 rounded-full bg-subtle border border-hairline hover:border-strong font-mono text-[11px] uppercase tracking-wider text-main cursor-pointer">
+            ↓ BACKUP ARCHIVE (.JSON)
+          </button>
+          <button onclick="resetDemoEntries()" id="footer-restore-btn" class="hidden px-5 py-2.5 rounded-full bg-subtle border border-hairline hover:border-strong font-mono text-[11px] uppercase tracking-wider text-sub hover:text-main cursor-pointer">
+            RESTORE SAMPLES
+          </button>
+        </div>
+
+        <div class="pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-2 font-mono text-[11px] text-dim">
+          <span id="footer-brand-title">STILL &amp; INK // PERSONAL ARCHIVE</span>
+          <span id="cloud-sync-status" class="text-ice/80">● CLOUD ARCHIVE CONNECTED</span>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 0: PRIVATE OWNER ADMIN LOGIN & PASSCODE SETTINGS                -->
+  <!-- ===================================================================== -->
+  <div id="admin-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6 backdrop-editorial" onclick="if(event.target.id==='admin-modal') closeAdminModal()">
+    <div class="glass-elevated rounded-3xl w-full max-w-md overflow-hidden flex flex-col" onclick="event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-hairline flex items-center justify-between bg-[#081329]/90">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+          <span class="font-mono text-xs uppercase tracking-widest text-main">OWNER ADMIN ACCESS</span>
+        </div>
+        <button onclick="closeAdminModal()" class="font-mono text-xs text-sub hover:text-main px-3 py-1 rounded-full bg-subtle border border-hairline hover:border-strong cursor-pointer">CLOSE ×</button>
+      </div>
+
+      <!-- Locked State: Enter Admin Passcode -->
+      <form id="admin-login-form" onsubmit="submitAdminUnlock(event)" class="p-6 flex flex-col gap-4">
+        <p class="text-xs sm:text-sm text-sub leading-relaxed">
+          Enter your owner passcode to unlock publishing, photo uploads, inline editing, and entry deletion across your cloud archive.
+        </p>
+        <div>
+          <label for="admin-passcode-input" class="block font-mono text-[10px] uppercase tracking-widest text-ice/80 mb-1.5">OWNER PASSCODE</label>
+          <input type="password" id="admin-passcode-input" required placeholder="Enter passcode (default: 2026)" class="w-full bg-subtle border border-hairline focus:border-strong rounded-xl px-3.5 py-2.5 font-mono text-sm text-main placeholder:text-dim outline-none">
+        </div>
+        <div id="admin-error-msg" class="hidden font-mono text-[11px] text-rose-300">Incorrect passcode. Try again.</div>
+        <button type="submit" class="btn-invert w-full py-2.5 rounded-full font-mono text-xs uppercase tracking-wider font-medium cursor-pointer">
+          UNLOCK OWNER MODE
+        </button>
+      </form>
+
+      <!-- Unlocked State: Manage Passcode or Lock -->
+      <div id="admin-unlocked-panel" class="hidden p-6 flex flex-col gap-5">
+        <div class="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-400/30 font-mono text-[11px] text-ice flex items-center justify-between">
+          <span>STATUS: OWNER UNLOCKED</span>
+          <span>☁ CLOUD SYNC ACTIVE</span>
+        </div>
+
+        <form onsubmit="updateAdminPasscode(event)" class="flex flex-col gap-3">
+          <label for="new-admin-passcode" class="block font-mono text-[10px] uppercase tracking-widest text-ice/80">CHANGE OWNER PASSCODE</label>
+          <div class="flex gap-2">
+            <input type="password" id="new-admin-passcode" required minlength="4" placeholder="New passcode (min 4 chars)" class="flex-1 bg-subtle border border-hairline focus:border-strong rounded-xl px-3.5 py-2 font-mono text-xs text-main placeholder:text-dim outline-none">
+            <button type="submit" class="px-4 py-2 rounded-xl bg-subtle border border-hairline hover:border-strong font-mono text-[11px] uppercase tracking-wider text-main cursor-pointer">SAVE</button>
+          </div>
+        </form>
+
+        <div class="pt-3 border-t border-hairline flex items-center justify-between gap-3">
+          <button type="button" onclick="lockAdminMode()" class="w-full py-2.5 rounded-full bg-subtle border border-hairline hover:border-rose-400/50 font-mono text-xs uppercase tracking-wider text-rose-300 cursor-pointer">
+            LOCK ADMIN SESSION
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- ... existing code ... -->
+        <div class="pt-6 mt-2 border-t border-hairline flex items-center justify-between">
+          <span class="font-mono text-[11px] text-dim">ARCHIVE RECORD</span>
+          <button onclick="deleteCurrentEntry()" id="reader-delete-btn" class="hidden font-mono text-[11px] uppercase tracking-wider text-dim hover:text-rose-400 cursor-pointer">[DELETE]</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT: CLOUD SYNC, PRIVATE ADMIN LOGIN & 3D INTERACTIONS         -->
+  <!-- ===================================================================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'still-and-ink-archive';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let db = null;
+    let auth = null;
+    let currentUser = null;
+    let cloudAdminPasscode = localStorage.getItem('stillink_admin_pass') || '2026';
+    let entriesUnsubscribe = null;
+    let settingsUnsubscribe = null;
+
+    function saveLocalFallback() {
+      try {
+        localStorage.setItem('stillink_entries', JSON.stringify(state.entries));
+        localStorage.setItem('stillink_title', state.title);
+        localStorage.setItem('stillink_bio', state.bio);
+        localStorage.setItem('stillink_admin_pass', cloudAdminPasscode);
+      } catch (e) {}
+    }
+
+    function loadLocalFallback() {
+      try {
+        const savedTitle = localStorage.getItem('stillink_title');
+        const savedBio = localStorage.getItem('stillink_bio');
+        const savedEntries = localStorage.getItem('stillink_entries');
+        if (savedTitle) state.title = savedTitle;
+        if (savedBio) state.bio = savedBio;
+        if (savedEntries) {
+          const parsed = JSON.parse(savedEntries);
+          if (Array.isArray(parsed) && parsed.length > 0) state.entries = parsed;
+        }
+      } catch (e) {}
+    }
+      if (type === 'ink') {
+        return `<svg viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg" class="w-full h-full object-cover">
+          <rect width="800" height="560" fill="#050d1d"/>
+          <g stroke="#7dd3fc" fill="none" stroke-linecap="round">
+            <circle cx="400" cy="280" r="170" stroke-width="1.2" opacity="0.25"/>
+            <circle cx="400" cy="280" r="125" stroke-width="1.8" opacity="0.45" stroke-dasharray="14 8"/>
+            <circle cx="400" cy="280" r="78" stroke-width="2.4" opacity="0.75"/>
+            <path d="M160 280 Q280 140 400 280 T640 280" stroke-width="2" opacity="0.65"/>
+            <path d="M160 280 Q280 420 400 280 T640 280" stroke-width="1.4" opacity="0.35"/>
+            <line x1="400" y1="70" x2="400" y2="490" stroke-width="0.9" opacity="0.22"/>
+            <line x1="120" y1="280" x2="680" y2="280" stroke-width="0.9" opacity="0.22"/>
+          </g>
+        </svg>`;
+      }
+      return `<svg viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg" class="w-full h-full object-cover">
+        <defs>
+          <linearGradient id="tideGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#040a17"/>
+            <stop offset="100%" stop-color="#0f294a"/>
+          </linearGradient>
+        </defs>
+        <rect width="800" height="560" fill="url(#tideGrad)"/>
+        <g stroke="#bae6fd" fill="none" opacity="0.38">
+          <path d="M-40 220 Q180 170 400 220 T840 220" stroke-width="1.5"/>
+          <path d="M-40 265 Q180 215 400 265 T840 265" stroke-width="1.8"/>
+          <path d="M-40 310 Q180 260 400 310 T840 310" stroke-width="2.2"/>
+          <path d="M-40 355 Q180 305 400 355 T840 355" stroke-width="1.4"/>
+          <path d="M-40 400 Q180 350 400 400 T840 400" stroke-width="1"/>
+        </g>
+      </svg>`;
+    }
+
+    async function initCloudSync() {
+      const statusEl = document.getElementById('cloud-sync-status');
+      loadLocalFallback();
+      syncHeaderAndBioUI();
+      renderAll();
+
+      if (!firebaseConfig) {
+        if (statusEl) statusEl.innerText = '● GITHUB / LOCAL READY';
+        return;
+      }
+      try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        if (initialAuthToken) {
+          await signInWithCustomToken(auth, initialAuthToken);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+          currentUser = user;
+          if (!user) return;
+          if (statusEl) statusEl.innerText = '● CLOUD ARCHIVE SYNCED';
+          subscribeToCloudData();
+        });
+      } catch (err) {
+        if (statusEl) statusEl.innerText = '● LOCAL STORAGE MODE';
+      }
+    }
+
+    function subscribeToCloudData() {
+      if (!db || !currentUser) return;
+
+      // 1. Listen to public site settings & owner passcode hash
+      const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'profile');
+      if (settingsUnsubscribe) settingsUnsubscribe();
+      settingsUnsubscribe = onSnapshot(settingsRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.title) state.title = data.title;
+          if (data.bio) state.bio = data.bio;
+          if (data.adminPasscode) cloudAdminPasscode = data.adminPasscode;
+          syncHeaderAndBioUI();
+        } else {
+          // Seed initial profile settings in cloud
+          setDoc(settingsRef, {
+            title: state.title,
+            bio: state.bio,
+            adminPasscode: cloudAdminPasscode
+          }).catch(() => {});
+        }
+      }, () => {});
+
+      // 2. Listen to public archive entries collection
+      const entriesCol = collection(db, 'artifacts', appId, 'public', 'data', 'entries');
+      if (entriesUnsubscribe) entriesUnsubscribe();
+      entriesUnsubscribe = onSnapshot(entriesCol, (snapshot) => {
+        if (snapshot.empty) {
+          // Seed initial sample entries once so visitors immediately see rich content
+          SAMPLE_ENTRIES.forEach((sample, idx) => {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'entries', sample.id);
+            setDoc(docRef, { ...sample, createdAt: Date.now() - idx * 60000 }).catch(() => {});
+          });
+        } else {
+          const loaded = [];
+          snapshot.forEach((d) => loaded.push(d.data()));
+          loaded.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          state.entries = loaded;
+          renderAll();
+        }
+      }, () => {});
+    }
+
+    function syncHeaderAndBioUI() {
+      document.getElementById('nav-brand-title').innerText = state.title;
+      document.getElementById('preloader-title').innerText = state.title;
+      document.getElementById('footer-brand-title').innerText = `${state.title} // PERSONAL ARCHIVE`;
+      const bioEl = document.getElementById('about-bio-text');
+      if (document.activeElement !== bioEl) {
+        bioEl.innerText = state.bio;
+      }
+    }
+
+    // =========================================================================
+    // PRIVATE OWNER ADMIN MODE
+    // =========================================================================
+    function applyAdminUI() {
+      const lockIcon = document.getElementById('admin-lock-icon');
+      const lockLabel = document.getElementById('admin-lock-label');
+      const newBtn = document.getElementById('nav-new-entry-btn');
+      const restoreBtn = document.getElementById('footer-restore-btn');
+      const deleteBtn = document.getElementById('reader-delete-btn');
+      const navTitle = document.getElementById('nav-brand-title');
+      const bioEl = document.getElementById('about-bio-text');
+
+      if (state.isAdmin) {
+        lockIcon.innerText = '🔓';
+        lockLabel.innerText = 'OWNER';
+        newBtn.classList.remove('hidden');
+        newBtn.classList.add('flex');
+        if (restoreBtn) restoreBtn.classList.remove('hidden');
+        if (deleteBtn) deleteBtn.classList.remove('hidden');
+        navTitle.setAttribute('contenteditable', 'true');
+        bioEl.setAttribute('contenteditable', 'true');
+      } else {
+        lockIcon.innerText = '🔒';
+        lockLabel.innerText = 'ADMIN';
+        newBtn.classList.add('hidden');
+        newBtn.classList.remove('flex');
+        if (restoreBtn) restoreBtn.classList.add('hidden');
+        if (deleteBtn) deleteBtn.classList.add('hidden');
+        navTitle.setAttribute('contenteditable', 'false');
+        bioEl.setAttribute('contenteditable', 'false');
+      }
+    }
+
+    function openAdminModal() {
+      const m = document.getElementById('admin-modal');
+      const loginForm = document.getElementById('admin-login-form');
+      const unlockedPanel = document.getElementById('admin-unlocked-panel');
+      document.getElementById('admin-error-msg').classList.add('hidden');
+
+      if (state.isAdmin) {
+        loginForm.classList.add('hidden');
+        unlockedPanel.classList.remove('hidden');
+      } else {
+        loginForm.classList.remove('hidden');
+        unlockedPanel.classList.add('hidden');
+        document.getElementById('admin-passcode-input').value = '';
+      }
+
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+      if (!state.isAdmin) document.getElementById('admin-passcode-input').focus();
+    }
+
+    function closeAdminModal() {
+      const m = document.getElementById('admin-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    function submitAdminUnlock(e) {
+      e.preventDefault();
+      const input = document.getElementById('admin-passcode-input').value.trim();
+      if (input === cloudAdminPasscode) {
+        state.isAdmin = true;
+        applyAdminUI();
+        closeAdminModal();
+        showToast('Owner mode unlocked');
+      } else {
+        document.getElementById('admin-error-msg').classList.remove('hidden');
+      }
+    }
+
+    async function updateAdminPasscode(e) {
+      e.preventDefault();
+      const nextPass = document.getElementById('new-admin-passcode').value.trim();
+      if (nextPass.length < 4) return;
+      cloudAdminPasscode = nextPass;
+      if (db && currentUser) {
+        const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'profile');
+        await setDoc(settingsRef, {
+          title: state.title,
+          bio: state.bio,
+          adminPasscode: cloudAdminPasscode
+        }).catch(() => {});
+      }
+      document.getElementById('new-admin-passcode').value = '';
+      showToast('Owner passcode updated in cloud');
+    }
+
+    function lockAdminMode() {
+      state.isAdmin = false;
+      applyAdminUI();
+      closeAdminModal();
+      showToast('Admin session locked');
+    }
+
+    function handleFooterCompose() {
+      if (!state.isAdmin) {
+        openAdminModal();
+        showToast('Unlock owner mode to post');
+        return;
+      }
+      openComposer();
+    }
+<!-- ... existing code ... -->
+    // Theme & Title Editing
+    function applyTheme(theme) {
+      const html = document.documentElement;
+      const label = document.getElementById('theme-label');
+      const icon = document.getElementById('theme-icon');
+      if (theme === 'arctic') {
+        html.classList.add('arctic');
+        label.innerText = 'DEEP ABYSS';
+        icon.innerText = '☾';
+      } else {
+        html.classList.remove('arctic');
+        label.innerText = 'ARCTIC MIST';
+        icon.innerText = '✦';
+      }
+      state.theme = theme;
+    }
+
+    function toggleTheme() {
+      applyTheme(state.theme === 'abyss' ? 'arctic' : 'abyss');
+      showToast(state.theme === 'arctic' ? 'Ambiance: Arctic Mist Glass' : 'Ambiance: Deep Abyss Midnight');
+    }
+
+    async function saveBrandTitle(raw) {
+      if (!state.isAdmin) return;
+      const val = raw.trim() || 'STILL & INK';
+      state.title = val;
+      syncHeaderAndBioUI();
+      if (db && currentUser) {
+        const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'profile');
+        await setDoc(settingsRef, {
+          title: state.title,
+          bio: state.bio,
+          adminPasscode: cloudAdminPasscode
+        }).catch(() => {});
+      }
+      showToast(`Title synced to cloud: "${val}"`);
+    }
+
+    async function saveBio(raw) {
+      if (!state.isAdmin) return;
+      const val = raw.trim();
+      if (val) {
+        state.bio = val;
+        if (db && currentUser) {
+          const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'profile');
+          await setDoc(settingsRef, {
+            title: state.title,
+            bio: state.bio,
+            adminPasscode: cloudAdminPasscode
+          }).catch(() => {});
+        }
+        showToast('Bio synced to cloud');
+      }
+    }
+<!-- ... existing code ... -->
+    function openComposer() {
+      if (!state.isAdmin) {
+        openAdminModal();
+        return;
+      }
+      const m = document.getElementById('composer-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+      document.getElementById('entry-title').focus();
+    }
+<!-- ... existing code ... -->
+    function processImageFile(file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX = 900;
+          let w = img.width, h = img.height;
+          if (w > MAX || h > MAX) {
+            if (w > h) { h = Math.round((h * MAX) / w); w = MAX; }
+            else { w = Math.round((w * MAX) / h); h = MAX; }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+          state.composerMediaDataUrl = dataUrl;
+          state.composerSvgType = null;
+          showComposerPreview(dataUrl);
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+<!-- ... existing code ... -->
+    async function submitNewEntry(e) {
+      e.preventDefault();
+      if (!state.isAdmin) return;
+      const category = document.querySelector('input[name="entryCategory"]:checked').value;
+      const title = document.getElementById('entry-title').value.trim();
+      const meta = document.getElementById('entry-meta').value.trim();
+      const body = document.getElementById('entry-body').value.trim();
+      if (!title || !body) return;
+
+      const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase();
+      const newEntry = {
+        id: 'post-' + Date.now(),
+        category,
+        title,
+        meta,
+        date: dateStr,
+        body,
+        imageUrl: state.composerMediaDataUrl,
+        svgType: state.composerSvgType,
+        tone: state.composerTone,
+        createdAt: Date.now()
+      };
+
+      state.entries.unshift(newEntry);
+      await saveEntryToCloud(newEntry);
+
+      document.getElementById('composer-form').reset();
+      clearComposerMedia();
+      setComposerTone('original');
+      closeComposer();
+      renderAll();
+      showToast('Published live to cloud archive');
+    }
+<!-- ... existing code ... -->
+    async function setReaderTone(tone) {
+      const el = document.getElementById('reader-media-el');
+      if (el) {
+        el.classList.remove('tone-original', 'tone-bluehour', 'tone-noir');
+        el.classList.add(getToneClass(tone));
+      }
+      updateReaderToneBtns(tone);
+      const entry = state.entries.find(e => e.id === state.activeReaderId);
+      if (entry) {
+        entry.tone = tone;
+        if (state.isAdmin) {
+          await saveEntryToCloud(entry);
+        }
+        renderAll();
+      }
+    }
+<!-- ... existing code ... -->
+    async function deleteCurrentEntry() {
+      if (!state.isAdmin || !state.activeReaderId) return;
+      const targetId = state.activeReaderId;
+      state.entries = state.entries.filter(e => e.id !== targetId);
+      if (db && currentUser) {
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'entries', targetId);
+        await deleteDoc(docRef).catch(() => {});
+      }
+      closeReader();
+      renderAll();
+      showToast('Entry deleted from cloud');
+    }
+
+    async function saveEntryToCloud(entry) {
+      saveLocalFallback();
+      if (!db || !currentUser) return;
+      try {
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'entries', entry.id);
+        await setDoc(docRef, entry);
+      } catch (e) {
+        showToast('Cloud sync warning — keep image under 800KB');
+      }
+    }
+
+    function downloadBackup() {
+      const payload = { siteTitle: state.title, bio: state.bio, exportedAt: new Date().toISOString(), entries: state.entries };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${state.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'archive'}-backup.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Backup downloaded (.json)');
+    }
+
+    async function resetDemoEntries() {
+      if (!state.isAdmin) return;
+      for (let i = 0; i < SAMPLE_ENTRIES.length; i++) {
+        const sample = { ...SAMPLE_ENTRIES[i], createdAt: Date.now() - i * 60000 };
+        await saveEntryToCloud(sample);
+      }
+      showToast('Sample entries restored to cloud');
+    }
+
+    function showToast(msg) {
+      const c = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = 'btn-invert px-4 py-2 rounded-full font-mono text-[11px] uppercase tracking-wider backdrop-blur-xl transition-all duration-300 transform translate-y-2 opacity-0';
+      t.innerText = msg;
+      c.appendChild(t);
+      requestAnimationFrame(() => t.classList.remove('translate-y-2', 'opacity-0'));
+      setTimeout(() => {
+        t.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => t.remove(), 300);
+      }, 2400);
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
+    }
+
+    // Expose handlers to inline HTML attributes
+    Object.assign(window, {
+      dismissPreloader,
+      toggleTheme,
+      openAdminModal,
+      closeAdminModal,
+      submitAdminUnlock,
+      updateAdminPasscode,
+      lockAdminMode,
+      handleFooterCompose,
+      openComposer,
+      closeComposer,
+      saveBrandTitle,
+      saveBio,
+      handleSingleLineEnter,
+      filterTimeline,
+      scrollTimelineTrack,
+      stepReel,
+      handleReelCardClick,
+      toggleAutoOrbit,
+      toggleOrbitalUnfold,
+      toggleAccordion,
+      handleImageUpload,
+      handleImageUrlInput,
+      useSampleArt,
+      clearComposerMedia,
+      setComposerTone,
+      submitNewEntry,
+      openReader,
+      setReaderTone,
+      closeReader,
+      deleteCurrentEntry,
+      downloadBackup,
+      resetDemoEntries,
+      state
+    });
+
+    window.addEventListener('resize', () => { buildOrbitalRing(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { closeComposer(); closeReader(); closeAdminModal(); }
+    });
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
